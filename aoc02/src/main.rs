@@ -7,22 +7,22 @@ use lazy_static::lazy_static;
 use regex::Regex;
 
 #[derive(Debug)]
-struct PassEntry {
+struct Password {
     counter: HashMap<char, u32>,
     target: char,
-    min_freq: u32,
-    max_freq: u32,
+    num_1: u32,
+    num_2: u32,
     password: String,
 }
 
-impl FromStr for PassEntry {
+impl FromStr for Password {
     type Err = Error;
 
-    fn from_str(s: &str) -> Result<PassEntry> {
+    fn from_str(s: &str) -> Result<Password> {
         lazy_static! {
             static ref RE: Regex = Regex::new(
                 r"(?x)
-                (?P<min_freq>[0-9]+)-(?P<max_freq>[0-9]+)\s+
+                (?P<num_1>[0-9]+)-(?P<num_2>[0-9]+)\s+
                 (?P<target>\w):\s+
                 (?P<password>\w+)
                 "
@@ -48,39 +48,35 @@ impl FromStr for PassEntry {
             }
         }
 
-        let result = PassEntry {
+        Ok(Password {
             counter,
             target: caps["target"].parse()?,
-            min_freq: caps["min_freq"].parse()?,
-            max_freq: caps["max_freq"].parse()?,
+            num_1: caps["num_1"].parse()?,
+            num_2: caps["num_2"].parse()?,
             password,
-        };
-
-        // Validate constraint
-        match result.counter.get(&result.target) {
-            Some(freq) => {
-                if freq < &result.min_freq || freq > &result.max_freq {
-                    Err(anyhow!("Invalid password (invalid freq): {:#?}", result))
-                } else {
-                    Ok(result)
-                }
-            }
-            None => Err(anyhow!("Invalid password (missing target): {:#?}", result)),
-        }
+        })
     }
 }
 
 // How many passwords are valid?
 fn part1(input: &str) -> Result<()> {
-    let mut passwords: Vec<PassEntry> = vec![];
-    for line in input.lines() {
-        match line.parse() {
-            Ok(password) => passwords.push(password),
-            Err(e) => eprintln!("{}", e),
-        }
-    }
+    let passwords: Vec<Password> = input.lines().filter_map(|l| l.parse().ok()).collect();
 
-    println!("Part 1: {}", passwords.len());
+    let valid_passwords: Vec<&Password> = passwords
+        .iter()
+        .filter_map(|pass| match pass.counter.get(&pass.target) {
+            Some(freq) => {
+                if freq < &pass.num_1 || freq > &pass.num_2 {
+                    None
+                } else {
+                    Some(pass)
+                }
+            }
+            None => None,
+        })
+        .collect();
+
+    println!("Part 1: {}", valid_passwords.len());
 
     Ok(())
 }
