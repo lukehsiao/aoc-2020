@@ -8,10 +8,10 @@ use regex::Regex;
 
 #[derive(Debug)]
 struct Password {
-    counter: HashMap<char, u32>,
+    counter: HashMap<char, usize>,
     target: char,
-    num_1: u32,
-    num_2: u32,
+    num_1: usize,
+    num_2: usize,
     password: String,
 }
 
@@ -37,7 +37,7 @@ impl FromStr for Password {
 
         // Count letter frequencies
         let password: String = caps["password"].parse()?;
-        let mut counter: HashMap<char, u32> = HashMap::new();
+        let mut counter: HashMap<char, usize> = HashMap::new();
         for c in password.chars() {
             if counter.contains_key(&c) {
                 if let Some(count) = counter.get_mut(&c) {
@@ -81,11 +81,44 @@ fn part1(input: &str) -> Result<()> {
     Ok(())
 }
 
+// How many passwords are valid with the corrected rules?
+fn part2(input: &str) -> Result<()> {
+    let passwords: Vec<Password> = input.lines().filter_map(|l| l.parse().ok()).collect();
+
+    let valid_passwords: Vec<&Password> = passwords
+        .iter()
+        .filter_map(|pass| {
+            let mut count = 0;
+
+            // -1 because the input is 1-indexed
+            match pass.password.chars().nth(pass.num_1 - 1) {
+                Some(c) if c == pass.target => count += 1,
+                _ => {}
+            }
+            match pass.password.chars().nth(pass.num_2 - 1) {
+                Some(c) if c == pass.target => count += 1,
+                _ => {}
+            }
+
+            if count == 1 {
+                Some(pass)
+            } else {
+                None
+            }
+        })
+        .collect();
+
+    println!("Part 2: {}", valid_passwords.len());
+
+    Ok(())
+}
+
 fn main() -> Result<()> {
     let mut input = String::new();
     io::stdin().read_to_string(&mut input)?;
 
     part1(&input)?;
+    part2(&input)?;
 
     Ok(())
 }
