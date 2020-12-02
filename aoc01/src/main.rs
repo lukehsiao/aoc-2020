@@ -29,16 +29,12 @@ fn part2(nums: &mut Vec<i64>, target: i64) -> Result<HashSet<i64>> {
 
     for i in 2..nums.len() {
         let sub_target: i64 = target - nums[i];
-
         let two_sum = part1(&nums[..i], sub_target)?;
-
         if two_sum.len() == 2 {
             two_sum.iter().for_each(|n| {
                 let _ = result.insert(*n);
             });
-
             result.insert(nums[i]);
-
             break;
         }
     }
