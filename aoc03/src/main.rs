@@ -31,22 +31,26 @@ impl FromStr for Slope {
 }
 
 impl Slope {
-    fn iter_part1(&self) -> IterPart1 {
-        IterPart1 {
+    fn iter_slope(&self, x_step: usize, y_step: usize) -> IterSlope {
+        IterSlope {
             slope: self,
             x: 0,
             y: 0,
+            x_step,
+            y_step,
         }
     }
 }
 
-struct IterPart1<'a> {
+struct IterSlope<'a> {
     slope: &'a Slope,
     x: usize,
     y: usize,
+    x_step: usize,
+    y_step: usize,
 }
 
-impl<'a> Iterator for IterPart1<'a> {
+impl<'a> Iterator for IterSlope<'a> {
     type Item = bool;
 
     fn next(&mut self) -> Option<bool> {
@@ -65,15 +69,15 @@ impl<'a> Iterator for IterPart1<'a> {
             None
         };
 
-        self.y += 1;
-        self.x += 3;
+        self.y += self.y_step;
+        self.x += self.x_step;
 
         result
     }
 }
 
 fn part1(slope: &Slope) -> Result<()> {
-    let count: u32 = slope.iter_part1().map(|b| b as u32).sum();
+    let count: u32 = slope.iter_slope(3, 1).map(|b| b as u32).sum();
 
     println!("Part 1: {}", count);
     Ok(())
