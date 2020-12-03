@@ -1,5 +1,6 @@
 use std::io::{self, Read};
 use std::str::FromStr;
+use std::time::Instant;
 
 use anyhow::{anyhow, Error, Result};
 
@@ -104,8 +105,12 @@ fn main() -> Result<()> {
     io::stdin().read_to_string(&mut input)?;
     let slope: Slope = input.parse()?;
 
+    let now = Instant::now();
     part1(&slope)?;
+    println!("Part 1 took: {:#?}", now.elapsed());
+    let now = Instant::now();
     part2(&slope)?;
+    println!("Part 2 took: {:#?}", now.elapsed());
 
     Ok(())
 }
