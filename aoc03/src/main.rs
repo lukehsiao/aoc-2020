@@ -78,8 +78,24 @@ impl<'a> Iterator for IterSlope<'a> {
 
 fn part1(slope: &Slope) -> Result<()> {
     let count: u32 = slope.iter_slope(3, 1).map(|b| b as u32).sum();
-
     println!("Part 1: {}", count);
+    Ok(())
+}
+
+fn part2(slope: &Slope) -> Result<()> {
+    let slopes: Vec<(usize, usize)> = vec![(1, 1), (3, 1), (5, 1), (7, 1), (1, 2)];
+
+    let product: u32 = slopes
+        .iter()
+        .map(|(x_step, y_step)| {
+            slope
+                .iter_slope(*x_step, *y_step)
+                .map(|b| b as u32)
+                .sum::<u32>()
+        })
+        .product();
+
+    println!("Part 2: {}", product);
     Ok(())
 }
 
@@ -89,6 +105,7 @@ fn main() -> Result<()> {
     let slope: Slope = input.parse()?;
 
     part1(&slope)?;
+    part2(&slope)?;
 
     Ok(())
 }
