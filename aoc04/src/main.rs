@@ -69,6 +69,76 @@ fn part1(input: &str) -> Result<()> {
     Ok(())
 }
 
+fn part2(input: &str) -> Result<()> {
+    // Blank line separates entries
+    let passports: Vec<Passport> = input.split("\n\n").filter_map(|l| l.parse().ok()).collect();
+
+    // Extra validation
+    let valid: Vec<&Passport> = passports
+        .iter()
+        .filter_map(|p| {
+            let byr: u32 = p.byr.parse().unwrap();
+            let iyr: u32 = p.iyr.parse().unwrap();
+            let eyr: u32 = p.eyr.parse().unwrap();
+
+            let mut result = Some(p);
+
+            if byr < 1920 || byr > 2002 {
+                result = None
+            }
+
+            if iyr < 2010 || iyr > 2020 {
+                result = None
+            }
+
+            if eyr < 2020 || eyr > 2030 {
+                result = None
+            }
+
+            match &p.hgt {
+                s if s.ends_with("cm") => {
+                    let cm: u32 = s[..s.len() - 2].parse().unwrap();
+                    if cm < 150 || cm > 193 {
+                        result = None
+                    }
+                }
+                s if s.ends_with("in") => {
+                    let inch: u32 = s[..s.len() - 2].parse().unwrap();
+                    if inch < 59 || inch > 76 {
+                        result = None
+                    }
+                }
+                _ => result = None,
+            }
+
+            if p.hcl.chars().nth(0).unwrap() != '#' || p.hcl.len() != 7 {
+                result = None
+            } else {
+                for c in p.hcl[1..].chars() {
+                    match c {
+                        '0'..='9' | 'a'..='f' => {}
+                        _ => result = None,
+                    }
+                }
+            }
+
+            match p.ecl.as_str() {
+                "amb" | "blu" | "brn" | "gry" | "grn" | "hzl" | "oth" => {}
+                _ => result = None,
+            }
+
+            if p.pid.len() != 9 {
+                result = None
+            }
+
+            result
+        })
+        .collect();
+
+    println!("Part 2: {}", valid.len());
+    Ok(())
+}
+
 fn main() -> Result<()> {
     let mut input = String::new();
     io::stdin().read_to_string(&mut input)?;
@@ -76,6 +146,10 @@ fn main() -> Result<()> {
     let now = Instant::now();
     part1(&input)?;
     println!("Part 1 took: {:#?}", now.elapsed());
+
+    let now = Instant::now();
+    part2(&input)?;
+    println!("Part 2 took: {:#?}", now.elapsed());
 
     Ok(())
 }
