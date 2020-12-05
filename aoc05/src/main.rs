@@ -62,6 +62,24 @@ fn part1(input: &str) -> Result<()> {
     Ok(())
 }
 
+fn part2(input: &str) -> Result<()> {
+    let mut seats: Vec<Seat> = input.lines().filter_map(|l| l.parse().ok()).collect();
+
+    seats.sort_by(|a, b| a.id.cmp(&b.id));
+
+    let mut next = seats[0].id + 1;
+    for seat in &seats[1..] {
+        if seat.id != next {
+            // Found my seat!
+            println!("Part 2: {}", next);
+            break;
+        }
+        next += 1;
+    }
+
+    Ok(())
+}
+
 fn main() -> Result<()> {
     let mut input = String::new();
     io::stdin().read_to_string(&mut input)?;
@@ -69,6 +87,10 @@ fn main() -> Result<()> {
     let now = Instant::now();
     part1(&input)?;
     println!("Part 1 took: {:#?}", now.elapsed());
+
+    let now = Instant::now();
+    part2(&input)?;
+    println!("Part 2 took: {:#?}", now.elapsed());
 
     Ok(())
 }
