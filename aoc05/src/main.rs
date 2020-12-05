@@ -6,8 +6,8 @@ use anyhow::{anyhow, Error, Result};
 
 #[derive(Debug)]
 struct Seat {
-    row: u8,
-    col: u8,
+    row: u32,
+    col: u32,
     id: u32,
 }
 
@@ -15,19 +15,50 @@ impl FromStr for Seat {
     type Err = Error;
 
     fn from_str(s: &str) -> Result<Seat> {
-        let row = 0;
-        let col = 0;
-        let id = 0;
+        let (row, col, id) = decode(s)?;
 
         Ok(Seat { row, col, id })
     }
 }
 
+fn decode(input: &str) -> Result<(u32, u32, u32)> {
+    const MULTIPLIER: u32 = 8;
+    let mut front = 0;
+    let mut back = 127;
+    let mut left = 0;
+    let mut right = 7;
+
+    for c in input.chars() {
+        match c {
+            'F' => back = (front + back) / 2,
+            'B' => front = (front + back + 1) / 2,
+            'L' => right = (left + right) / 2,
+            'R' => left = (left + right + 1) / 2,
+            _ => return Err(anyhow!("Invalid input: {}", input)),
+        }
+    }
+
+    let row = match input.chars().nth(6) {
+        Some('F') => front,
+        Some('B') => back,
+        _ => return Err(anyhow!("Invalid input: {}", input)),
+    };
+
+    let col = match input.chars().nth(9) {
+        Some('R') => right,
+        Some('L') => left,
+        _ => return Err(anyhow!("Invalid input: {}", input)),
+    };
+
+    Ok((row, col, row * MULTIPLIER + col))
+}
+
 fn part1(input: &str) -> Result<()> {
-    // Blank line separates entries
     let seats: Vec<Seat> = input.lines().filter_map(|l| l.parse().ok()).collect();
 
-    println!("Part 1: {}", passports.len());
+    let max = seats.iter().max_by(|x, y| x.id.cmp(&y.id)).unwrap();
+
+    println!("Part 1: {}", max.id);
     Ok(())
 }
 
@@ -40,4 +71,18 @@ fn main() -> Result<()> {
     println!("Part 1 took: {:#?}", now.elapsed());
 
     Ok(())
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_decode() -> Result<()> {
+        assert_eq!((70, 7, 567), decode("BFFFBBFRRR")?);
+        assert_eq!((14, 7, 119), decode("FFFBBBFRRR")?);
+        assert_eq!((102, 4, 820), decode("BBFFBBFRLL")?);
+
+        Ok(())
+    }
 }
