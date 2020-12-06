@@ -12,3 +12,4 @@ fi
 name="$(printf "aoc%02d" "$1")"
 cargo new --bin "$name"
 mkdir "$name/input"
+touch "$name/README.md"
