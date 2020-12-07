@@ -1,4 +1,4 @@
-use std::collections::HashMap;
+use std::collections::{HashMap, VecDeque};
 use std::io::{self, Read};
 use std::time::Instant;
 
@@ -64,6 +64,28 @@ fn part1(input: &str) -> Result<()> {
     Ok(())
 }
 
+fn part2(input: &str) -> Result<()> {
+    let rules: HashMap<String, Vec<InnerBag>> = parse_rules(input)?;
+    let mut queue: VecDeque<&InnerBag> = VecDeque::new();
+    let mut count = 0;
+
+    for inner_bag in rules.get("shiny gold").unwrap().iter() {
+        queue.push_back(&inner_bag);
+    }
+
+    while let Some(bag) = queue.pop_front() {
+        count += bag.count;
+        for inner_bag in rules.get(&bag.name).unwrap().iter() {
+            for _ in 0..bag.count {
+                queue.push_back(&inner_bag);
+            }
+        }
+    }
+
+    println!("Part 2: {}", count);
+    Ok(())
+}
+
 fn main() -> Result<()> {
     let mut input = String::new();
     io::stdin().read_to_string(&mut input)?;
@@ -72,5 +94,8 @@ fn main() -> Result<()> {
     part1(&input)?;
     println!("Part 1 took: {:#?}", now.elapsed());
 
+    let now = Instant::now();
+    part2(&input)?;
+    println!("Part 2 took: {:#?}", now.elapsed());
     Ok(())
 }
