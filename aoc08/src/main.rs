@@ -26,9 +26,8 @@ fn parse_input(input: &str) -> Result<Vec<Instruction>> {
     Ok(instructions)
 }
 
-fn part1(input: &str) -> Result<()> {
+fn part1(instructions: &Vec<Instruction>) -> Result<()> {
     let mut accumulator = 0;
-    let instructions = parse_input(input)?;
     let mut visited: HashSet<i32> = HashSet::new();
     let mut pc: i32 = 0;
 
@@ -58,9 +57,10 @@ fn part1(input: &str) -> Result<()> {
 fn main() -> Result<()> {
     let mut input = String::new();
     io::stdin().read_to_string(&mut input)?;
+    let instructions = parse_input(&input)?;
 
     let now = Instant::now();
-    part1(&input)?;
+    part1(&instructions)?;
     println!("Part 1 took: {:#?}", now.elapsed());
 
     Ok(())
