@@ -4,7 +4,7 @@ use std::time::Instant;
 
 use anyhow::{anyhow, Result};
 
-#[derive(Debug, PartialEq)]
+#[derive(Clone, Debug, PartialEq)]
 enum Instruction {
     Nop(i32),
     Acc(i32),
@@ -26,7 +26,7 @@ fn parse_input(input: &str) -> Result<Vec<Instruction>> {
     Ok(instructions)
 }
 
-fn part1(instructions: &Vec<Instruction>) -> Result<()> {
+fn part1(instructions: &Vec<Instruction>) -> Result<i32> {
     let mut accumulator = 0;
     let mut visited: HashSet<i32> = HashSet::new();
     let mut pc: i32 = 0;
@@ -34,8 +34,7 @@ fn part1(instructions: &Vec<Instruction>) -> Result<()> {
     while pc >= 0 && pc < instructions.len() as i32 {
         let instruction = &instructions[pc as usize];
         if visited.contains(&pc) {
-            println!("Part 1: {}", accumulator);
-            break;
+            return Err(anyhow!("Part 1: {}", accumulator));
         }
 
         visited.insert(pc);
@@ -51,6 +50,29 @@ fn part1(instructions: &Vec<Instruction>) -> Result<()> {
         }
     }
 
+    Ok(accumulator)
+}
+
+// Naive brute force attempt. Literally swap every nop to jmp and jmp to nop until we find the
+// solution.
+fn part2(instructions: &Vec<Instruction>) -> Result<()> {
+    for (idx, instruction) in instructions.iter().enumerate() {
+        let tmp = match instruction {
+            Instruction::Jmp(n) => Instruction::Nop(*n),
+            Instruction::Nop(n) => Instruction::Jmp(*n),
+            Instruction::Acc(_) => continue,
+        };
+
+        // Swap in the temporary change
+        let mut altered_instructions: Vec<Instruction> = instructions.clone();
+        altered_instructions[idx] = tmp;
+
+        match part1(&altered_instructions) {
+            Ok(n) => println!("Part 2: {}", n),
+            Err(_) => {}
+        }
+    }
+
     Ok(())
 }
 
@@ -60,8 +82,14 @@ fn main() -> Result<()> {
     let instructions = parse_input(&input)?;
 
     let now = Instant::now();
-    part1(&instructions)?;
+    if let Err(e) = part1(&instructions) {
+        println!("{}", e);
+    }
     println!("Part 1 took: {:#?}", now.elapsed());
+
+    let now = Instant::now();
+    part2(&instructions)?;
+    println!("Part 2 took: {:#?}", now.elapsed());
 
     Ok(())
 }
