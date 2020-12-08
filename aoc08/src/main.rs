@@ -4,7 +4,7 @@ use std::time::Instant;
 
 use anyhow::{anyhow, Result};
 
-#[derive(Clone, Debug, PartialEq)]
+#[derive(Clone, Copy, Debug, PartialEq)]
 enum Instruction {
     Nop(i32),
     Acc(i32),
@@ -55,21 +55,25 @@ fn part1(instructions: &Vec<Instruction>) -> Result<i32> {
 
 // Naive brute force attempt. Literally swap every nop to jmp and jmp to nop until we find the
 // solution.
-fn part2(instructions: &Vec<Instruction>) -> Result<()> {
-    for (idx, instruction) in instructions.iter().enumerate() {
+fn part2(instructions: &mut Vec<Instruction>) -> Result<()> {
+    let len = instructions.len();
+    for i in 0..len {
+        let instruction = instructions[i];
         let tmp = match instruction {
-            Instruction::Jmp(n) => Instruction::Nop(*n),
-            Instruction::Nop(n) => Instruction::Jmp(*n),
+            Instruction::Jmp(n) => Instruction::Nop(n),
+            Instruction::Nop(n) => Instruction::Jmp(n),
             Instruction::Acc(_) => continue,
         };
 
         // Swap in the temporary change
-        let mut altered_instructions: Vec<Instruction> = instructions.clone();
-        altered_instructions[idx] = tmp;
+        instructions[i] = tmp;
 
-        match part1(&altered_instructions) {
-            Ok(n) => println!("Part 2: {}", n),
-            Err(_) => {}
+        match part1(&instructions) {
+            Ok(n) => {
+                println!("Part 2: {}", n);
+                break;
+            }
+            Err(_) => instructions[i] = instruction,
         }
     }
 
@@ -79,7 +83,7 @@ fn part2(instructions: &Vec<Instruction>) -> Result<()> {
 fn main() -> Result<()> {
     let mut input = String::new();
     io::stdin().read_to_string(&mut input)?;
-    let instructions = parse_input(&input)?;
+    let mut instructions = parse_input(&input)?;
 
     let now = Instant::now();
     if let Err(e) = part1(&instructions) {
@@ -88,7 +92,7 @@ fn main() -> Result<()> {
     println!("Part 1 took: {:#?}", now.elapsed());
 
     let now = Instant::now();
-    part2(&instructions)?;
+    part2(&mut instructions)?;
     println!("Part 2 took: {:#?}", now.elapsed());
 
     Ok(())
