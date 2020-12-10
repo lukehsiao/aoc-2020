@@ -1,3 +1,4 @@
+use std::cmp;
 use std::io::{self, Read};
 use std::time::Instant;
 
@@ -38,14 +39,55 @@ fn part1(nums: &[usize], window_len: usize) -> Result<usize> {
     Err(anyhow!("No solution found."))
 }
 
+fn part2(nums: &[usize], target: usize) -> Result<usize> {
+    // Brute force. Two indexes. Right until pass the target, if passed, move left up.
+    let mut left = 0;
+    let mut right = 1;
+
+    while left < right && right < nums.len() {
+        let sum: usize = nums.iter().skip(left).take(right - left).sum();
+
+        if sum == target {
+            // Return sum of min and max in this range
+            let (min, max) = nums
+                .iter()
+                .skip(left)
+                .take(right - left)
+                .fold((sum, 0), |acc, value| {
+                    (cmp::min(acc.0, *value), cmp::max(acc.1, *value))
+                });
+            return Ok(min + max);
+        } else if sum > target {
+            left += 1;
+        } else {
+            right += 1;
+        }
+    }
+
+    Err(anyhow!("No solution found."))
+}
+
 fn main() -> Result<()> {
     let mut input = String::new();
     io::stdin().read_to_string(&mut input)?;
     let nums = parse_input(&input)?;
 
     let now = Instant::now();
-    match part1(&nums, 25) {
-        Ok(v) => println!("Part 1: {}, took {:#?}", v, now.elapsed()),
+
+    let target = match part1(&nums, 25) {
+        Ok(v) => {
+            println!("Part 1: {}, took {:#?}", v, now.elapsed());
+            Some(v)
+        }
+        Err(e) => {
+            eprintln!("{}", e);
+            None
+        }
+    };
+
+    let now = Instant::now();
+    match part2(&nums, target.unwrap()) {
+        Ok(v) => println!("Part 2: {}, took {:#?}", v, now.elapsed()),
         Err(e) => eprintln!("{}", e),
     }
 
@@ -83,6 +125,37 @@ mod tests {
         )?;
 
         assert_eq!(127, part1(&input, 5)?);
+
+        Ok(())
+    }
+
+    #[test]
+    fn test_example2() -> Result<()> {
+        let input = parse_input(
+            "
+35
+20
+15
+25
+47
+40
+62
+55
+65
+95
+102
+117
+150
+182
+127
+219
+299
+277
+309
+576",
+        )?;
+
+        assert_eq!(62, part2(&input, 127)?);
 
         Ok(())
     }
