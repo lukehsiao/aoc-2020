@@ -72,7 +72,32 @@ impl Seating {
             .sum()
     }
 
-    // Perform one iteration of the rules
+    fn occupied_neighbors_sight(&self, row: isize, col: isize) -> u32 {
+        DIRECTIONS
+            .iter()
+            .map(|(drow, dcol)| {
+                let mut next_row = row + drow;
+                let mut next_col = col + dcol;
+
+                while self.on_grid(next_row, next_col)
+                    && self.spots[next_row as usize][next_col as usize] == Spot::Floor
+                {
+                    next_row += drow;
+                    next_col += dcol;
+                }
+
+                if self.on_grid(next_row, next_col)
+                    && self.spots[next_row as usize][next_col as usize] == Spot::Occupied
+                {
+                    1
+                } else {
+                    0
+                }
+            })
+            .sum()
+    }
+
+    // Perform one iteration of the part 1 rules
     fn evolve(&mut self) -> bool {
         let mut next = self.spots.clone();
 
@@ -105,22 +130,63 @@ impl Seating {
         self.spots = next;
         changed
     }
+
+    // Perform one iteration of the part 2 rules
+    fn evolve2(&mut self) -> bool {
+        let mut next = self.spots.clone();
+
+        let mut changed = false;
+
+        for row in 0..self.spots.len() {
+            for col in 0..self.spots[0].len() {
+                match self.spots[row][col] {
+                    Spot::Floor => continue,
+                    Spot::Empty => {
+                        if self.occupied_neighbors_sight(row as isize, col as isize) == 0 {
+                            next[row][col] = Spot::Occupied;
+                            changed = true;
+                        }
+                    }
+                    Spot::Occupied => {
+                        if self.occupied_neighbors_sight(row as isize, col as isize) >= 5 {
+                            next[row][col] = Spot::Empty;
+                            changed = true;
+                        }
+                    }
+                }
+            }
+        }
+
+        if changed {
+            self.iter += 1;
+        }
+
+        self.spots = next;
+        changed
+    }
+
+    fn count_occupied(&self) -> usize {
+        self.spots
+            .iter()
+            .map(|row| {
+                row.iter()
+                    .map(|s| if *s == Spot::Occupied { 1 } else { 0 })
+                    .sum::<usize>()
+            })
+            .sum()
+    }
 }
 
 fn part1(seating: &mut Seating) -> Result<usize> {
     while seating.evolve() {}
 
-    let occupied = seating
-        .spots
-        .iter()
-        .map(|row| {
-            row.iter()
-                .map(|s| if *s == Spot::Occupied { 1 } else { 0 })
-                .sum::<usize>()
-        })
-        .sum();
+    Ok(seating.count_occupied())
+}
 
-    Ok(occupied)
+fn part2(seating: &mut Seating) -> Result<usize> {
+    while seating.evolve2() {}
+
+    Ok(seating.count_occupied())
 }
 
 fn main() -> Result<()> {
@@ -132,6 +198,13 @@ fn main() -> Result<()> {
     let now = Instant::now();
     match part1(&mut seating) {
         Ok(v) => println!("Part 1: {}, took {:#?}", v, now.elapsed()),
+        Err(e) => eprintln!("{}", e),
+    };
+
+    let mut seating = Seating::new(&input);
+    let now = Instant::now();
+    match part2(&mut seating) {
+        Ok(v) => println!("Part 2: {}, took {:#?}", v, now.elapsed()),
         Err(e) => eprintln!("{}", e),
     };
 
