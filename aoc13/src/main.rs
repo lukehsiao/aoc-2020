@@ -7,7 +7,7 @@ use anyhow::{anyhow, Error, Result};
 #[derive(Debug)]
 struct Input {
     target: isize,
-    buses: Vec<isize>,
+    buses: Vec<(usize, isize)>,
 }
 
 impl FromStr for Input {
@@ -15,15 +15,16 @@ impl FromStr for Input {
 
     fn from_str(s: &str) -> Result<Input> {
         let target = s.lines().next().unwrap().parse()?;
-        let buses: Vec<isize> = s
+        let buses: Vec<(usize, isize)> = s
             .lines()
             .skip(1)
             .next()
             .unwrap()
             .split(',')
-            .filter_map(|c| match c {
+            .enumerate()
+            .filter_map(|(i, c)| match c {
                 "x" => None,
-                n => n.parse().ok(),
+                n => Some((i, n.parse().unwrap())),
             })
             .collect();
 
@@ -35,7 +36,10 @@ fn part1(input: &Input) -> Result<isize> {
     let mut min_wait = isize::MAX;
     let mut bus_id = 0;
 
-    for (idx, id) in input.buses.iter().enumerate() {
+    for (_, id) in input.buses.iter() {
+        if *id == 0 {
+            continue;
+        }
         let mut multiplier = 1;
         while id * multiplier < input.target {
             multiplier += 1;
@@ -43,11 +47,15 @@ fn part1(input: &Input) -> Result<isize> {
 
         let wait = (id * multiplier) - input.target;
         if wait < min_wait {
-            bus_id = input.buses[idx];
+            bus_id = *id;
             min_wait = wait;
         }
     }
     Ok(bus_id * min_wait)
+}
+
+fn part2(input: &Input) -> Result<isize> {
+    todo!()
 }
 
 fn main() -> Result<()> {
@@ -59,6 +67,12 @@ fn main() -> Result<()> {
     let now = Instant::now();
     match part1(&input) {
         Ok(v) => println!("Part 1: {}, took {:#?}", v, now.elapsed()),
+        Err(e) => eprintln!("{}", e),
+    };
+
+    let now = Instant::now();
+    match part2(&input) {
+        Ok(v) => println!("Part 2: {}, took {:#?}", v, now.elapsed()),
         Err(e) => eprintln!("{}", e),
     };
 
