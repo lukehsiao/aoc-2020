@@ -1,8 +1,10 @@
+use std::convert::TryInto;
 use std::io::{self, Read};
 use std::str::FromStr;
 use std::time::Instant;
 
-use anyhow::{anyhow, Error, Result};
+use anyhow::{Error, Result};
+use num::Integer;
 
 #[derive(Debug)]
 struct Input {
@@ -54,8 +56,28 @@ fn part1(input: &Input) -> Result<isize> {
     Ok(bus_id * min_wait)
 }
 
-fn part2(input: &Input) -> Result<isize> {
-    todo!()
+fn part2(input: &Input) -> Result<usize> {
+    let mut t = 1;
+    let mut lcm = 1;
+
+    // Naive implementation just increment and test brute force
+    for (idx, bus_id) in input.buses.iter() {
+        // Increment time until we find a time that works for this bus.
+        loop {
+            if (t + idx) % *bus_id as usize == 0 {
+                // This is a valid time that matches the expected offset
+                break;
+            }
+            t += lcm
+        }
+
+        // This is the trick. We shouldn't just increment by 1, we should increment in steps that
+        // keep a valid offset for this (and all previous) buses. This is least common multiple of
+        // all of the buses' IDs.
+        lcm = lcm.lcm(&(*bus_id as usize));
+    }
+
+    Ok(t)
 }
 
 fn main() -> Result<()> {
