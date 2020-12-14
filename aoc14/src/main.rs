@@ -65,6 +65,43 @@ fn part1(input: &Vec<Instruction>) -> Result<u64> {
     Ok(mem.values().sum())
 }
 
+fn part2(input: &Vec<Instruction>) -> Result<u64> {
+    // Don't actually care about all memory locations. Just track the mapping we care about.
+    let mut mem: HashMap<u64, u64> = HashMap::new();
+    let mut force_1 = 0;
+    let mut masks: Vec<u64> = vec![0];
+
+    for inst in input {
+        match inst {
+            Instruction::Mask { and, or } => {
+                force_1 = *or;
+                masks.truncate(1);
+
+                // First, get back all the X's which we discarded in pre-processing.
+                let mut x = or ^ and;
+
+                // Generate all the possible addr
+                while x != 0 {
+                    let lowest_set_bit = x ^ (x & (x - 1));
+                    for i in 0..=masks.len() {
+                        masks.push(masks[i] ^ lowest_set_bit);
+                    }
+
+                    // Unset the lowest bit of X
+                    x &= x - 1;
+                }
+            }
+            Instruction::Write { idx, value } => {
+                for mask in &masks {
+                    mem.insert((idx | force_1) ^ mask, *value);
+                }
+            }
+        }
+    }
+
+    Ok(mem.values().sum())
+}
+
 fn main() -> Result<()> {
     // Process input
     let mut input = String::new();
@@ -73,6 +110,12 @@ fn main() -> Result<()> {
 
     let now = Instant::now();
     match part1(&instructions) {
+        Ok(v) => println!("Part 1: {}, took {:#?}", v, now.elapsed()),
+        Err(e) => eprintln!("{}", e),
+    };
+
+    let now = Instant::now();
+    match part2(&instructions) {
         Ok(v) => println!("Part 1: {}, took {:#?}", v, now.elapsed()),
         Err(e) => eprintln!("{}", e),
     };
