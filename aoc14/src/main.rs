@@ -9,7 +9,7 @@ use regex::Regex;
 
 #[derive(Debug, Copy, Clone)]
 enum Instruction {
-    Write { idx: usize, value: u64 },
+    Write { idx: u64, value: u64 },
     Mask { and: u64, or: u64 },
 }
 
@@ -43,9 +43,7 @@ impl FromStr for Instruction {
 
 fn part1(input: &Vec<Instruction>) -> Result<u64> {
     // Don't actually care about all memory locations. Just track the mapping we care about.
-    let mut addr_map: HashMap<usize, usize> = HashMap::new();
-
-    let mut mem: Vec<u64> = vec![];
+    let mut mem: HashMap<u64, u64> = HashMap::new();
     let mut current_mask = Instruction::Mask { and: 0, or: 0 };
 
     for inst in input {
@@ -59,18 +57,12 @@ fn part1(input: &Vec<Instruction>) -> Result<u64> {
                     masked_value |= or;
                 }
 
-                if addr_map.contains_key(idx) {
-                    mem[*addr_map.get(&idx).unwrap()] = masked_value;
-                } else {
-                    let mem_idx = mem.len();
-                    mem.push(masked_value);
-                    addr_map.insert(*idx, mem_idx);
-                }
+                mem.insert(*idx, masked_value);
             }
         }
     }
 
-    Ok(mem.iter().sum())
+    Ok(mem.values().sum())
 }
 
 fn main() -> Result<()> {
