@@ -1,3 +1,4 @@
+use std::collections::hash_map::Entry;
 use std::collections::HashMap;
 use std::io::{self, Read};
 use std::time::Instant;
@@ -5,42 +6,28 @@ use std::time::Instant;
 use anyhow::Result;
 
 fn part1(input: &Vec<usize>, turns: usize) -> Result<usize> {
-    let mut mem: HashMap<usize, Vec<usize>> = HashMap::new();
+    // Stop before the last element so that the last one is easily recognized as never spoken
+    // before.
+    let mut mem: HashMap<_, _> = input[..input.len() - 1]
+        .iter()
+        .copied()
+        .enumerate()
+        .map(|(i, n)| (n, i + 1)) // turns are 1-indexed
+        .collect();
 
-    // First, fill in the input turns
-    for (idx, num) in input.iter().enumerate() {
-        if let Some(v) = mem.get_mut(num) {
-            v.push(idx + 1);
-        } else {
-            mem.insert(*num, vec![idx + 1]);
-        }
-    }
-
-    let mut last_num: usize = input[input.len() - 1];
-    for i in input.len() + 1..=turns {
-        if let Some(j) = mem.get(&last_num) {
-            // First time it's been spoken
-            if j.len() == 1 {
-                last_num = 0;
-            } else {
-                last_num = j[1] - j[0];
+    // Use the entry API to avoid multiple lookups and fold to track the last_num
+    let result = (input.len()..turns).fold(*input.last().unwrap(), |last_num, turn| {
+        // Compute the next number
+        match mem.entry(last_num) {
+            Entry::Occupied(mut v) => turn - v.insert(turn),
+            Entry::Vacant(v) => {
+                v.insert(turn);
+                0
             }
-
-            if let Some(k) = mem.get_mut(&last_num) {
-                k.push(i);
-                if k.len() > 2 {
-                    k.remove(0);
-                }
-            } else {
-                mem.insert(last_num, vec![i]);
-            }
-        } else {
-            last_num = 0;
-            mem.insert(last_num, vec![i]);
         }
-    }
+    });
 
-    Ok(last_num)
+    Ok(result)
 }
 
 fn main() -> Result<()> {
