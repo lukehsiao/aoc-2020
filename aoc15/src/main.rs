@@ -59,6 +59,12 @@ fn main() -> Result<()> {
         Err(e) => eprintln!("{}", e),
     };
 
+    let now = Instant::now();
+    match part1(&nums, 30_000_000) {
+        Ok(v) => println!("Part 2: {}, took {:#?}", v, now.elapsed()),
+        Err(e) => eprintln!("{}", e),
+    };
+
     Ok(())
 }
 
