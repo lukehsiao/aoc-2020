@@ -1,3 +1,4 @@
+use std::collections::HashSet;
 use std::io::{self, Read};
 use std::ops::RangeInclusive;
 use std::time::Instant;
@@ -70,9 +71,79 @@ fn part2(input: &str) -> Result<usize> {
 
     let rules = parse_rules(sections[0])?;
 
-    dbg!(&rules);
+    // Parse all tickets
+    let mut tickets: Vec<Vec<usize>> = sections[1]
+        .lines()
+        .skip(1)
+        .map(|l| l.split(',').map(|v| v.parse().unwrap()).collect())
+        .collect();
+    tickets.extend(
+        sections[2]
+            .lines()
+            .skip(1)
+            .map(|l| l.split(',').map(|v| v.parse().unwrap()).collect()),
+    );
 
-    todo!()
+    // filter out invalid tickets
+    tickets = tickets
+        .iter()
+        .cloned()
+        .filter(|ticket| {
+            let mut valid = true;
+            for value in ticket {
+                if rules.iter().all(|rule| !rule.contains(*value)) {
+                    valid = false;
+                    break;
+                }
+            }
+            valid
+        })
+        .collect();
+
+    // Figure out all the rules that that are allowed for each field
+    let mut possible_rule_idx: Vec<HashSet<usize>> = rules
+        .iter()
+        .map(|rule| {
+            // Map each rule to the column that it passes on for all tickets
+            (0..tickets[0].len())
+                .filter_map(|field| {
+                    if tickets.iter().all(|ticket| rule.contains(ticket[field])) {
+                        Some(field)
+                    } else {
+                        None
+                    }
+                })
+                .collect()
+        })
+        .collect();
+
+    // Pair fields with their rules
+    let mut seen: HashSet<usize> = HashSet::new();
+    while possible_rule_idx.iter().any(|v| v.len() > 1) {
+        let shortest: usize = *possible_rule_idx
+            .iter()
+            .find(|v| v.len() == 1 && !seen.contains(&v.iter().next().unwrap()))
+            .unwrap()
+            .iter()
+            .next()
+            .unwrap();
+
+        for v in possible_rule_idx.iter_mut() {
+            if v.len() > 1 {
+                v.remove(&shortest);
+                seen.insert(shortest);
+            }
+        }
+    }
+
+    let my_ticket = &tickets[0];
+
+    // First 6 rules are departure
+    Ok(possible_rule_idx[0..6]
+        .iter()
+        .map(|v| v.iter().next().unwrap())
+        .map(|idx| my_ticket[*idx])
+        .product())
 }
 
 fn main() -> Result<()> {
