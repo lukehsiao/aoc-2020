@@ -51,15 +51,15 @@ fn part1(input: &str) -> Result<usize> {
 
     // Check all nearby tickets only
     let ticket_error_rate = sections[2].lines().skip(1).fold(0, |mut acc, ticket| {
-        for value in ticket
+        ticket
             .trim()
             .split(',')
             .map(|v| v.parse::<usize>().unwrap())
-        {
-            if rules.iter().all(|rule| !rule.contains(value)) {
-                acc += value
-            }
-        }
+            .for_each(|value| {
+                if rules.iter().all(|rule| !rule.contains(value)) {
+                    acc += value
+                }
+            });
         acc
     });
 
